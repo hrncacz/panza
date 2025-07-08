@@ -3,33 +3,43 @@ import json
 import time
 import sys
 from messenger import Message, Messenger
+import system_prompt
+from func_call import has_func_call
 
 
 def main():
+    if len(sys.argv) > 1:
+        test_response = """
+Sancho Panza:
+Ah, my friend, to unravel the tapestry of our working directory, we must first cast our gaze upon its contents. Let us summon a list of all files and directories within this realm.
+
+```json
+{"function": "get_files_info", "parameters": {"directory": null}}
+```
+
+This will reveal the structure and contents before us. Once done, I shall assist you further with any specific insights or tasks!
+        """
+        test_messenger = Messenger()
+        test_message = Message("system", "First test message")
+        test_messenger.insert_message(test_message)
+        has_func_call(test_response, test_messenger)
+        return
     # system_prompt = """You are a wise and patient debugging wizard named CodeMage.
     # You speak in a slightly mystical but friendly tone. You love helping developers
     # solve problems step-by-step. You use gentle encouragement and occasionally
     # reference magic/wizardry metaphors when explaining code concepts.
     # You're thorough but not verbose."""
     cwd = "/home/martin/Documents/Prog/panza"
-    system_prompt = """You are a wise and patient assistant named Sancho Panza.
-    You speak like my old and much wiser friend. You love helping developers solve problems
-    step-by-step. You use gentle encouragement and occasionally reference metaphors when
-    explaining code concepts. You're thorough but not verbose.
-    Our current working folder is predefined and you do not have to use it as parameter in function calls. 
-
-    Available functions:
-    - get_files_info: Takes parameter working_directory and directory. working_directory parameter is root from where will function list all files and directories, directory parameter is optional in case you want to list only in some subfolder.
-    - get_file_content: Takes parameter working_directory and file_path. File_path parameter leads to file which contents you want to read. Function returns content of defined file up to 10000 characters.
-    - 
-
-    To call a function, respond with JSON in this oneline format:
-{"function": "function_name", "parameters": [{"param1": "value1"}]}
-
-    If no function is needed, respond normally.
+    system_prompt_initial = f"""
+    {system_prompt.role}
+    {system_prompt.functions}
+    {system_prompt.functions_descriptions}
+    {system_prompt.function_call_instructions}
+    {system_prompt.functions_call_example}
+    {system_prompt.restrictions}
     """
     exit_chat = False
-    init_message = Message("system", system_prompt)
+    init_message = Message("system", system_prompt_initial)
     messages = Messenger()
     messages.insert_message(init_message)
     # phi3:3.8b
@@ -42,15 +52,20 @@ def main():
         messages.insert_message(user_message)
         if prompt != "exit":
             response = requests.post("http://localhost:11434/api/chat", json={
-                "model": "phi3:3.8b", "messages": messages.get_messages(), "stream": False, })
-
-            print(response.json()["message"]["content"])
-            print(f"Test output --- \n{response.json()}\n")
-            response_message = Message("assistant", response.json()[
-                                       "message"]["content"])
-            messages.insert_message(response_message)
-            end = time.time()
-            print(f"Execution speed: {end-start}s")
+                "model": "phi4:14b", "messages": messages.get_messages(), "stream": False, })
+        # Other models are:
+            #   phi3:3.8b
+            #   phi4:14b
+            res_content = response.json()["message"]["content"]
+            if has_func_call(res_content, messages) == False:
+                print("Sancho Panza:")
+                print(response.json()["message"]["content"])
+                # print(f"Test output --- \n{response.json()}\n")
+                response_message = Message("assistant", response.json()[
+                                           "message"]["content"])
+                messages.insert_message(response_message)
+                end = time.time()
+                print(f"Execution speed: {end-start}s")
         else:
             exit_chat = True
 
