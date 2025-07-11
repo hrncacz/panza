@@ -16,4 +16,4 @@ def get_file_content(working_directory, file_path):
                         file_path}\" truncated at 10000 characters]"
                 return file_content
         except Exception as e:
-            return f"Error: {e}"
+            raise Exception(f"Error: {e}")

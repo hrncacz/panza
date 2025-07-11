@@ -43,9 +43,11 @@ functions_descriptions = """
 """
 
 function_call_instructions = """
+<function_call_instructions>
 - When calling function, use JSON format defined in function_call_example tags
 - When calling function, respond ONLY with JSON format from function_call_example tags
 - If not calling function respond base on role tag instructions
+</function_call_instructions>
 """
 
 functions_call_example = """
@@ -55,5 +57,7 @@ functions_call_example = """
 """
 
 restrictions = """
+<restrictions>
 - DO NOT use unnecessary long paragraphs
+</restrictions>
 """

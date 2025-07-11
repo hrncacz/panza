@@ -8,6 +8,7 @@ from func_call import has_func_call
 
 
 def main():
+    cwd = "/home/martin/Documents/Prog/panza"
     if len(sys.argv) > 1:
         test_response = """
 Sancho Panza:
@@ -22,14 +23,13 @@ This will reveal the structure and contents before us. Once done, I shall assist
         test_messenger = Messenger()
         test_message = Message("system", "First test message")
         test_messenger.insert_message(test_message)
-        has_func_call(test_response, test_messenger)
+        has_func_call(test_response, test_messenger, cwd)
         return
     # system_prompt = """You are a wise and patient debugging wizard named CodeMage.
     # You speak in a slightly mystical but friendly tone. You love helping developers
     # solve problems step-by-step. You use gentle encouragement and occasionally
     # reference magic/wizardry metaphors when explaining code concepts.
     # You're thorough but not verbose."""
-    cwd = "/home/martin/Documents/Prog/panza"
     system_prompt_initial = f"""
     {system_prompt.role}
     {system_prompt.functions}
@@ -51,21 +51,27 @@ This will reveal the structure and contents before us. Once done, I shall assist
         user_message = Message("user", prompt)
         messages.insert_message(user_message)
         if prompt != "exit":
-            response = requests.post("http://localhost:11434/api/chat", json={
-                "model": "phi4:14b", "messages": messages.get_messages(), "stream": False, })
-        # Other models are:
-            #   phi3:3.8b
-            #   phi4:14b
-            res_content = response.json()["message"]["content"]
-            if has_func_call(res_content, messages) == False:
-                print("Sancho Panza:")
-                print(response.json()["message"]["content"])
-                # print(f"Test output --- \n{response.json()}\n")
-                response_message = Message("assistant", response.json()[
-                                           "message"]["content"])
-                messages.insert_message(response_message)
-                end = time.time()
-                print(f"Execution speed: {end-start}s")
+            using_function = True
+            loops = 0
+            while using_function == True and loops < 10:
+                response = requests.post("http://localhost:11434/api/chat", json={
+                    "model": "phi4:14b", "messages": messages.get_messages(), "stream": False, })
+            # Other models are:
+                #   phi3:3.8b
+                #   phi4:14b
+                res_content = response.json()["message"]["content"]
+                if has_func_call(res_content, messages) == False:
+                    using_function = False
+                    print("Sancho Panza:")
+                    print(response.json()["message"]["content"])
+                    # print(f"Test output --- \n{response.json()}\n")
+                    response_message = Message("assistant", response.json()[
+                                               "message"]["content"])
+                    messages.insert_message(response_message)
+                    end = time.time()
+                    print(f"Execution speed: {end-start}s")
+                else:
+                    loops += 1
         else:
             exit_chat = True
 

@@ -20,6 +20,6 @@ def run_file(working_directory, file_path):
             else:
                 return f"STDOUT: {result.stdout}\nSTDERR: {result.stderr}"
         except subprocess.CalledProcessError as scpe:
-            return f"Process exited with code {scpe.returncode}"
+            raise Exception(f"Process exited with code {scpe.returncode}")
         except Exception as e:
-            return f"Error: executing Python file: {e}"
+            raise Exception(f"Error: executing Python file: {e}")

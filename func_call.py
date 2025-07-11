@@ -5,8 +5,19 @@ import re
 import json
 from messenger import Message, Messenger
 
+functions_available = {
+    "get_files_info": get_files_info,
+    "get_file_content": get_file_content,
+    "run_file": run_file
+}
 
-def has_func_call(response, messages):
+
+def successful_call(messages, value):
+    new_message = Message("system", f"<return_value>{value}</return_value>")
+    messages.insert_message(new_message)
+
+
+def has_func_call(response, messages, working_directory):
     pat = r"([{].*?[}]+)"
     func = re.search(pat, response)
     if func is not None:
@@ -15,12 +26,47 @@ def has_func_call(response, messages):
         print("REGEX END")
         try:
             func_dict = json.loads(func.group())
-            print(f"Sent function: {func_dict["function"]}")
         except Exception as e:
             print(f"Error: {e}")
             error_message = Message(
-                "system", f"It was not possible to serialize found JSON string {func.group()}")
-        return True
-
+                "system", f"<error>It was not possible to serialize found JSON string: {func.group()}</error><original_error_message>{e}</original_error_message>")
+            messages.insert_message(error_message)
+        function = func_dict["function"]
+        parameters = func_dict["parameters"]
+        try:
+            match function:
+                case "get_files_info":
+                    if "directory" in parameters:
+                        successful_call(messages, functions_available[function](
+                            working_directory, parameters["directory"]))
+                    else:
+                        successful_call(
+                            messages, functions_available[function](working_directory))
+                case "get_file_content":
+                    if "file_path" in parameters:
+                        print(functions_available[function](
+                            working_directory, parameters["file_path"]))
+                    else:
+                        error_message = Message(
+                            "system", f"<error>Expected parameter was not found - <parameter>file_path</parameter></error>")
+                        messages.insert_message(error_message)
+                case "run_file":
+                    if "file_path" in parameters:
+                        print(functions_available[function](
+                            working_directory, parameters["file_path"]))
+                    else:
+                        error_message = Message(
+                            "system", f"<error>Expected parameter was not found - <parameter>file_path</parameter></error>")
+                        messages.insert_message(error_message)
+                case _:
+                    error_message = Message(
+                        "system", f"<error>Requested function is unknown</error>")
+                    messages.insert_message(error_message)
+            return True
+        except Exception as e:
+            print(f"Error: {e}")
+            error_message = Message(
+                "system", f"<error>It was not possible to run requested function: {func.group()}</error><original_error_message>{e}</original_error_message>")
+            messages.insert_message(error_message)
     else:
         return False
