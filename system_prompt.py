@@ -14,7 +14,7 @@ functions = """
     - parameters:
         - working_directory
         - directory (optional)
-- get_files_contet
+- get_file_contet
     - parameters:
         - working_directory
         - file_path
@@ -31,7 +31,7 @@ functions_descriptions = """
     - returns list of folder and files inside path of working_directory parameter and directory parameter
     - parameter working_directory - is root directory of project, that you should debug. This parameter is preconfigured and you do not have to call it.
     - parameter directory - is sub directory of working directory
-- get_files_content:
+- get_file_content:
     - returns raw content of file up to 10000 characters
     - parameter working_directory - is root directory of project, that you should debug. This parameter is preconfigured and you do not have to call it.
     - parameter file_path - direct file which you intend to read
@@ -53,11 +53,16 @@ function_call_instructions = """
 functions_call_example = """
 <example_function_call>
 {"function": "get_files_info", "parameters": {"directory": "subdirectory"}}
+OR
+{"function": "get_files_info", "parameters": {}}
+OR
+{"function": "get_file_content", "parameters": {"file_path": "subdirectory"}}
 </example_function_calling>
 """
 
 restrictions = """
 <restrictions>
 - DO NOT use unnecessary long paragraphs
+- NEVER asume content of files, use get_file_content function instead
 </restrictions>
 """

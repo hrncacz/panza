@@ -13,26 +13,27 @@ functions_available = {
 
 
 def successful_call(messages, value):
-    new_message = Message("system", f"<return_value>{value}</return_value>")
+    new_message = Message("system", f"{value}")
     messages.insert_message(new_message)
 
 
 def has_func_call(response, messages, working_directory):
-    pat = r"([{].*?[}]+)"
-    func = re.search(pat, response)
+    pat = r"([{].*?[}]{2,})"
+    response_no_new_lines = response.replace("\n", "")
+    response_no_new_lines = response_no_new_lines.replace(" ", "")
+    func = re.search(pat, response_no_new_lines)
     if func is not None:
-        print("REGEX CHECK")
-        print(func.group())
-        print("REGEX END")
+        # print("REGEX CHECK")
+        # print(func.group())
+        # print("REGEX END")
         try:
             func_dict = json.loads(func.group())
+            function = func_dict["function"]
+            parameters = func_dict["parameters"]
         except Exception as e:
-            print(f"Error: {e}")
             error_message = Message(
                 "system", f"<error>It was not possible to serialize found JSON string: {func.group()}</error><original_error_message>{e}</original_error_message>")
             messages.insert_message(error_message)
-        function = func_dict["function"]
-        parameters = func_dict["parameters"]
         try:
             match function:
                 case "get_files_info":
@@ -44,7 +45,7 @@ def has_func_call(response, messages, working_directory):
                             messages, functions_available[function](working_directory))
                 case "get_file_content":
                     if "file_path" in parameters:
-                        print(functions_available[function](
+                        successful_call(messages, functions_available[function](
                             working_directory, parameters["file_path"]))
                     else:
                         error_message = Message(
@@ -52,7 +53,7 @@ def has_func_call(response, messages, working_directory):
                         messages.insert_message(error_message)
                 case "run_file":
                     if "file_path" in parameters:
-                        print(functions_available[function](
+                        successful_call(messages, functions_available[function](
                             working_directory, parameters["file_path"]))
                     else:
                         error_message = Message(

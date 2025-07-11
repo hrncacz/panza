@@ -8,14 +8,20 @@ from func_call import has_func_call
 
 
 def main():
-    cwd = "/home/martin/Documents/Prog/panza"
+    cwd = "/home/martin/bootDev/boot_dev_Python_Asteroids"
     if len(sys.argv) > 1:
         test_response = """
 Sancho Panza:
 Ah, my friend, to unravel the tapestry of our working directory, we must first cast our gaze upon its contents. Let us summon a list of all files and directories within this realm.
 
+
 ```json
-{"function": "get_files_info", "parameters": {"directory": null}}
+{
+    "function": "get_file_content",
+    "parameters": {
+        "file_path": "main.py"
+    }
+}
 ```
 
 This will reveal the structure and contents before us. Once done, I shall assist you further with any specific insights or tasks!
@@ -54,13 +60,14 @@ This will reveal the structure and contents before us. Once done, I shall assist
             using_function = True
             loops = 0
             while using_function == True and loops < 10:
+                print(f"Lool - {loops}")
                 response = requests.post("http://localhost:11434/api/chat", json={
-                    "model": "phi4:14b", "messages": messages.get_messages(), "stream": False, })
+                    "model": "phi3:3.8b", "messages": messages.get_messages(), "stream": False, })
             # Other models are:
                 #   phi3:3.8b
                 #   phi4:14b
                 res_content = response.json()["message"]["content"]
-                if has_func_call(res_content, messages) == False:
+                if has_func_call(res_content, messages, cwd) == False:
                     using_function = False
                     print("Sancho Panza:")
                     print(response.json()["message"]["content"])
